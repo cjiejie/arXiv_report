@@ -1,0 +1,29 @@
+name: Daily SLAM Paper Push
+
+on:
+  schedule:
+    # arXiv 更新于北京时间早上 8:00/9:00，建议在 9:30 (即 UTC 01:30) 运行
+    - cron: '30 0 * * 1-5'  # 周一至周五运行，周末 arXiv 不更新
+  workflow_dispatch:        # 支持在 GitHub 网页上手动点“Run workflow”调试
+
+jobs:
+  run-crawler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests openai
+
+      - name: Run Crawler & Push
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+        run: python daily_paper_crawler.py
