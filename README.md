@@ -1,6 +1,6 @@
 # arXiv_report
 
-抓取 arXiv 上与具身导航、立体视觉 SLAM、机械臂控制与规划相关的新论文，用大模型写成中文速览。配置了 Server酱 SendKey 时推送到微信，否则写成本地 Markdown。
+抓取 arXiv 上与具身导航、立体视觉 SLAM、机械臂控制与规划相关的新论文，用大模型写成中文速览，经 Server酱 推送到微信。
 
 ## 它怎么筛论文
 
@@ -31,15 +31,15 @@ pip install requests openai
 
 ## 本地运行
 
-`LLM_API_KEY` 必填。不设置 `SERVERCHAN_SENDKEY` 时，结果写到当前目录的 `YYYY.MM.DD_SLAM_Navigation_daily_精选.md`。
+`LLM_API_KEY` 和 `SERVERCHAN_SENDKEY` 都必填。正文只有一套 Markdown，作为 Server酱 的 `desp` 推送。Server酱 会把它渲染成页面；`desp` 不支持 HTML。
 
 ```bash
 export LLM_API_KEY=你的DeepSeek密钥
-export SERVERCHAN_SENDKEY=你的Server酱SendKey   # 可选
+export SERVERCHAN_SENDKEY=你的Server酱SendKey
 python daily_paper_crawler.py
 ```
 
-没有命中论文时程序直接结束，不推送、不写文件。单篇总结失败时，该篇保留英文标题，贡献记为「提炼失败，请点击链接查看原文。」
+没有命中论文时程序直接结束，不推送。单篇总结失败时，该篇保留英文标题，贡献记为「提炼失败，请点击链接查看原文。」
 
 ## 定时推送
 
@@ -50,7 +50,7 @@ python daily_paper_crawler.py
 | Secret | 作用 |
 |---|---|
 | `LLM_API_KEY` | DeepSeek API 密钥，必填 |
-| `SERVERCHAN_SENDKEY` | [Server酱 Turbo](https://sct.ftqq.com/) SendKey。不配置时，Markdown 只写在 Actions 运行器上，任务结束后就没了 |
+| `SERVERCHAN_SENDKEY` | [Server酱](https://sct.ftqq.com/) SendKey，必填。`sctp` 开头会走 Server酱³ 的推送地址 |
 
 ## 改筛选范围
 
@@ -79,4 +79,4 @@ python daily_paper_crawler.py
 `cs.CV`、`cs.LG` 更新更密，会占满这 500 篇窗口。可以收窄 `ARXIV_CATEGORIES`，或加大 `MAX_RESULTS_PER_CAT`。
 
 **微信没收到**  
-确认 SendKey 属于 Turbo 版，且脚本打印的是推送成功。失败时会打印 Server酱返回的 JSON。
+确认脚本打印的是推送成功。失败时会打印 Server酱返回的 JSON。`SCT` 开头走 Turbo，`sctp` 开头走 Server酱³。

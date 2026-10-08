@@ -175,9 +175,9 @@ def analyze_paper_with_llm(client: OpenAI, paper: dict) -> dict:
             "sub_field": paper['category']
         }
 
-# ================= 3. 生成可粘贴至微信公众号的纯文本 =================
+# ================= 3. 组装正文并推送 Server酱 =================
 def build_markdown_content(papers_data: list) -> str:
-    """构建可直接复制到微信公众号编辑器的纯文本内容"""
+    """组装 Server酱 desp。正文只支持 Markdown，由 Server酱 渲染成页面。"""
     date_str = datetime.now().strftime("%Y年%m月%d日")
     lines = [
         f"【SLAM / 导航 / 机械臂速览】",
@@ -208,9 +208,15 @@ def build_markdown_content(papers_data: list) -> str:
 
     return "\n".join(lines)
 
+def serverchan_endpoint(sendkey: str) -> str:
+    match = re.match(r"sctp(\d+)t", sendkey)
+    if match:
+        return f"https://{match.group(1)}.push.ft07.com/send/{sendkey}.send"
+    return f"https://sctapi.ftqq.com/{sendkey}.send"
+
 def send_to_serverchan(title: str, desp: str, sendkey: str):
-    """通过 Server酱 Turbo 版推送至微信"""
-    url = f"https://sctapi.ftqq.com/{sendkey}.send"
+    """把同一份 Markdown 正文推送到微信"""
+    url = serverchan_endpoint(sendkey)
     payload = {
         "title": title,
         "desp": desp
@@ -226,6 +232,8 @@ def send_to_serverchan(title: str, desp: str, sendkey: str):
 def main():
     if not LLM_API_KEY:
         raise ValueError("请设置 LLM_API_KEY 环境变量")
+    if not SERVERCHAN_SENDKEY:
+        raise ValueError("请设置 SERVERCHAN_SENDKEY 环境变量")
 
     client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
 
@@ -246,20 +254,13 @@ def main():
         paper.update(meta)
         processed_papers.append(paper)
 
-    # 3. 组装 Markdown 并推送
+    # 3. 组装正文并推送
     date_str = datetime.now().strftime("%Y.%m.%d")
-    md_content = build_markdown_content(processed_papers)
-    if SERVERCHAN_SENDKEY:
-        send_to_serverchan(
-            title=f"{date_str} SLAM/Navigation 每日精选",
-            desp=md_content,
-            sendkey=SERVERCHAN_SENDKEY
-        )
-    else:
-        out_path = f"{date_str}_SLAM_Navigation_daily_精选.md"
-        with open(out_path, "w", encoding="utf-8") as f:
-            f.write(md_content)
-        print(f"[+] 未设置 SERVERCHAN_SENDKEY，已写入 {out_path}")
+    send_to_serverchan(
+        title=f"{date_str} SLAM/Navigation 每日精选",
+        desp=build_markdown_content(processed_papers),
+        sendkey=SERVERCHAN_SENDKEY
+    )
 
 if __name__ == "__main__":
     main()
