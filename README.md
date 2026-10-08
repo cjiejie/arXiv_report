@@ -31,7 +31,7 @@ pip install requests openai
 
 ## 本地运行
 
-`LLM_API_KEY` 和 `SERVERCHAN_SENDKEY` 都必填。正文只有一套 Markdown，作为 Server酱 的 `desp` 推送。Server酱 会把它渲染成页面；`desp` 不支持 HTML。
+`LLM_API_KEY` 和 `SERVERCHAN_SENDKEY` 都必填。正文只有一套 Markdown，作为 Server酱 的 `desp` 推送。Server酱会把它渲染成页面，不渲染 HTML。版式与[这篇速览](https://mp.weixin.qq.com/s/7PmHOyedsq6DG3ka7brNeQ)一致：今日论文列表，然后是论文详细解读。
 
 ```bash
 export LLM_API_KEY=你的DeepSeek密钥

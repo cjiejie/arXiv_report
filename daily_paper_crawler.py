@@ -176,36 +176,43 @@ def analyze_paper_with_llm(client: OpenAI, paper: dict) -> dict:
         }
 
 # ================= 3. 组装正文并推送 Server酱 =================
+def md_text(text: str) -> str:
+    """转义会打断 Markdown 的字符。Server酱不渲染 HTML。"""
+    return re.sub(r"([\\`*_\[\]])", r"\\\1", text or "")
+
+def md_link(label: str, url: str) -> str:
+    safe = (url or "").strip().replace(" ", "%20").replace(")", "%29")
+    return f"[{label}]({safe})"
+
 def build_markdown_content(papers_data: list) -> str:
-    """组装 Server酱 desp。正文只支持 Markdown，由 Server酱 渲染成页面。"""
-    date_str = datetime.now().strftime("%Y年%m月%d日")
+    """按速览的两段式组装 Server酱 desp。段落之间空一行，否则不会换行。"""
+    date_str = datetime.now().strftime("%Y.%m.%d")
     lines = [
-        f"【SLAM / 导航 / 机械臂速览】",
-        f"{date_str}",
+        f"### {date_str} SLAM/Navigation 每日精选",
         "",
-        f"今日精选 {len(papers_data)} 篇 arXiv 最新论文",
-        "",
-        "━━━━━━━━━━━━━━",
+        "**■ 今日论文列表**",
         "",
     ]
+    for item in papers_data:
+        lines.extend([md_text(item["title_cn"]), ""])
 
+    lines.extend(["**■ 论文详细解读**", ""])
     for idx, item in enumerate(papers_data, 1):
-        lines.append(f"0{idx}｜{item['title_cn']}" if idx < 10 else f"{idx}｜{item['title_cn']}")
-        lines.append("")
-        lines.append(f"　　原题：{item['title_en']}")
-        lines.append(f"　　分类：{item.get('sub_field', item['category'])}")
-        lines.append(f"　　作者：{item['authors']}")
-        lines.append("")
-        lines.append(f"　　{item['contribution']}")
-        lines.append("")
-        lines.append(f"　　▸ arXiv　{item['abs_url']}")
-        lines.append(f"　　▸ PDF　　{item['pdf_url']}")
+        links = [md_link("arXiv", item["abs_url"]), md_link("PDF", item["pdf_url"])]
         if item.get("code_url"):
-            lines.append(f"　　▸ 代码　　{item['code_url']}")
-        lines.append("")
-        lines.append("━━━━━━━━━━━━━━")
-        lines.append("")
-
+            links.append(md_link("代码", item["code_url"]))
+        lines.extend([
+            f"**{idx:02d}. {md_text(item['title_cn'])}**",
+            "",
+            md_text(item["title_en"]),
+            "",
+            f"作者：{md_text(item['authors'])} \\| 分类：{md_text(item.get('sub_field', item['category']))}",
+            "",
+            f"核心贡献：{md_text(item['contribution'])}",
+            "",
+            " \\| ".join(links),
+            "",
+        ])
     return "\n".join(lines)
 
 def serverchan_endpoint(sendkey: str) -> str:
