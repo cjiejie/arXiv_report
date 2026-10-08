@@ -175,24 +175,36 @@ def analyze_paper_with_llm(client: OpenAI, paper: dict) -> dict:
             "sub_field": paper['category']
         }
 
-# ================= 3. 生成 Markdown 并推送至 Server酱 =================
+# ================= 3. 生成可粘贴至微信公众号的纯文本 =================
 def build_markdown_content(papers_data: list) -> str:
-    """构建适合微信排版阅读与复制的 Markdown 内容"""
+    """构建可直接复制到微信公众号编辑器的纯文本内容"""
     date_str = datetime.now().strftime("%Y年%m月%d日")
     lines = [
-        f"### SLAM/Navigation/机械臂速览 ({date_str})\n",
-        f"> 今日精选 {len(papers_data)} 篇 arXiv 最新论文\n",
-        "---\n"
+        f"【SLAM / 导航 / 机械臂速览】",
+        f"{date_str}",
+        "",
+        f"今日精选 {len(papers_data)} 篇 arXiv 最新论文",
+        "",
+        "━━━━━━━━━━━━━━",
+        "",
     ]
 
     for idx, item in enumerate(papers_data, 1):
-        code_str = f" | [代码]({item['code_url']})" if item.get("code_url") else ""
-        lines.append(f"#### {idx}. {item['title_cn']}")
-        lines.append(f"**原题**：*{item['title_en']}*")
-        lines.append(f"**分类**：`{item.get('sub_field', item['category'])}` | **作者**：{item['authors']}")
-        lines.append(f"> **核心贡献**：{item['contribution']}")
-        lines.append(f"[arXiv: {item['arxiv_id']}]({item['abs_url']}) | [PDF]({item['pdf_url']}){code_str}\n")
-        lines.append("---\n")
+        lines.append(f"0{idx}｜{item['title_cn']}" if idx < 10 else f"{idx}｜{item['title_cn']}")
+        lines.append("")
+        lines.append(f"　　原题：{item['title_en']}")
+        lines.append(f"　　分类：{item.get('sub_field', item['category'])}")
+        lines.append(f"　　作者：{item['authors']}")
+        lines.append("")
+        lines.append(f"　　{item['contribution']}")
+        lines.append("")
+        lines.append(f"　　▸ arXiv　{item['abs_url']}")
+        lines.append(f"　　▸ PDF　　{item['pdf_url']}")
+        if item.get("code_url"):
+            lines.append(f"　　▸ 代码　　{item['code_url']}")
+        lines.append("")
+        lines.append("━━━━━━━━━━━━━━")
+        lines.append("")
 
     return "\n".join(lines)
 
