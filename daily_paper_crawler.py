@@ -13,21 +13,57 @@ SERVERCHAN_SENDKEY = os.getenv("SERVERCHAN_SENDKEY", "")  # 填入或从环境�
 LLM_BASE_URL = "https://api.deepseek.com/v1"
 MODEL_NAME = "deepseek-chat"
 
-ARXIV_CATEGORIES = ["cs.RO", "cs.CV"]
-MAX_RESULTS_PER_CAT = 50
+ARXIV_CATEGORIES = ["cs.RO", "cs.CV","cs.AI", "eess.IV", "cs.LG","cs.SY"]
+MAX_RESULTS_PER_CAT = 300
 
 KEYWORDS = [
-    r"\bslam\b",
+    # 机械臂运动控制
+    r"\bimpedance control\b",
+    r"\badmittance control\b",
+    r"\bforce(?:/torque)? control\b",
+    r"\binverse dynamics\b",
+    r"\binverse kinematics\b",
+    r"\bvisual servoing\b",
+    r"\bcompliant control\b",
+    r"\btrajectory tracking\b",
+    # 机械臂规划
+    r"\b(?:manipulator|robot(?:ic)? arm|arm) (?:motion |path |trajectory )?planning\b",
+    r"\btrajectory optimization\b",
+    r"\btask and motion planning\b",
+    r"\bmoveit\b",
+    r"\bwhole[- ]body\b",
+    # 立体视觉、深度与常见视觉 SLAM
+    r"\bstereo\b",
+    r"\bvslam\b",
+    r"\bdepth estimation\b",
     r"\bvisual odometry\b",
-    r"\blidar\b",
-    r"\bpath planning\b",
+    r"\bvisual slam\b",
+    r"\bvisual[- ]inertial\b",
+    r"\bbundle adjustment\b",
+    r"\borb[- ]?slam\d*\b",
+    r"\borb3\b",
+    r"\brtab[- ]?map\b",
+    r"\bvins(?:[- ](?:mono|fusion))?\b",
+    r"\bopenvins\b",
+    # 导航
     r"\bnavigation\b",
-    r"\bstate estimation\b",
-    r"\bpoint cloud\b",
+    r"\bvisual navigation\b",
+    r"\bglobal path planning\b",
+    r"\blocal path planning\b",
+    r"\bmotion planning\b",
+    r"\bobstacle avoidance\b",
+    r"\btraversabilit(?:y|ies)\b",
     r"\bcostmap\b",
+    r"\boccupancy\b",
+    r"\bVLN\b",
+    r"\bDRLN\b",
+    # 建图与状态估计
+    r"\bslam\b",
+    r"\bmapping\b",
+    r"\bstate estimation\b",
     r"\bpose estimation\b",
     r"\bloop closure\b",
-    r"\bmapping\b"
+    r"\bpoint cloud\b"
 ]
 
 # ================= 1. arXiv 抓取与过滤 =================
@@ -75,7 +111,7 @@ def fetch_arxiv_papers():
 
 # ================= 2. LLM 提炼总结 =================
 def analyze_paper_with_llm(client: OpenAI, paper: dict) -> dict:
-    prompt = f"""你是一名机器人导航与 SLAM 领域的资深研究员。请阅读以下 arXiv 论文信息：
+    prompt = f"""你是一名机器人导航、机械臂与 SLAM 领域的资深研究员。请阅读以下 arXiv 论文信息：
 
 英文标题: {paper['title_en']}
 摘要: {paper['summary']}
@@ -83,10 +119,10 @@ def analyze_paper_with_llm(client: OpenAI, paper: dict) -> dict:
 请严格按照以下 JSON 格式输出，不要包含 Markdown 语法标记或任何多余文字：
 {{
   "title_cn": "准确严谨的中文直译标题，保留学术专有名词（如 NeRF、LiDAR、Factor Graph 等）",
-  "contribution": "一两句中文精炼概括：针对什么痛点 + 提出了什么方法 + 达到了什么效果（不超过80字）",
+  "contribution": "中文精炼概括：针对什么痛点(当前什么问题、痛点、难点) + 提出了什么方法 + 达到了什么效果（不超过300字）",
   "has_code": true或false,
   "code_url": "若摘要中提及了 GitHub/开源链接则提取，否则留空",
-  "sub_field": "归类到以下标签之一：[激光/视觉 SLAM, 多传感器融合, 路径规划与控制, 3D 重建与表征, 具身建图]"
+  "sub_field": "归类到以下标签之一：[具身人形, 机械臂运动控制, 机械臂规划, 立体视觉与视觉 SLAM, 导航, 建图与状态估计]"
 }}"""
 
     try:
@@ -112,18 +148,18 @@ def build_markdown_content(papers_data: list) -> str:
     """构建适合微信排版阅读与复制的 Markdown 内容"""
     date_str = datetime.now().strftime("%Y年%m月%d日")
     lines = [
-        f"### 🤖 SLAM & 机器人导航速览 ({date_str})\n",
-        f"> 今日精选 {len(papers_data)} 篇 arXiv 最新论文，请长按下方内容复制后打开「订阅号助手」发布。\n",
+        f"### SLAM/Navigation/机械臂速览 ({date_str})\n",
+        f"> 今日精选 {len(papers_data)} 篇 arXiv 最新论文\n",
         "---\n"
     ]
 
     for idx, item in enumerate(papers_data, 1):
-        code_str = f" | [💻 代码]({item['code_url']})" if item.get("code_url") else ""
-        lines.append(f"#### {idx}. 🇨🇳 {item['title_cn']}")
+        code_str = f" | [代码]({item['code_url']})" if item.get("code_url") else ""
+        lines.append(f"#### {idx}. {item['title_cn']}")
         lines.append(f"**原题**：*{item['title_en']}*")
         lines.append(f"**分类**：`{item.get('sub_field', item['category'])}` | **作者**：{item['authors']}")
-        lines.append(f"> 💡 **核心贡献**：{item['contribution']}")
-        lines.append(f"🔗 [arXiv: {item['arxiv_id']}]({item['abs_url']}) | [⬇️ PDF]({item['pdf_url']}){code_str}\n")
+        lines.append(f"> **核心贡献**：{item['contribution']}")
+        lines.append(f"[arXiv: {item['arxiv_id']}]({item['abs_url']}) | [PDF]({item['pdf_url']}){code_str}\n")
         lines.append("---\n")
 
     return "\n".join(lines)
@@ -146,8 +182,6 @@ def send_to_serverchan(title: str, desp: str, sendkey: str):
 def main():
     if not LLM_API_KEY:
         raise ValueError("请设置 LLM_API_KEY 环境变量")
-    if not SERVERCHAN_SENDKEY:
-        raise ValueError("请设置 SERVERCHAN_SENDKEY 环境变量")
 
     client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
 
@@ -157,8 +191,8 @@ def main():
         print("[*] 今日无相关论文，跳过推送。")
         return
 
-    # 精选前 10~15 篇
-    selected_papers = papers[:12]
+    # 精选前 30 篇
+    selected_papers = papers[:30]
     processed_papers = []
 
     # 2. LLM 提炼
@@ -171,11 +205,17 @@ def main():
     # 3. 组装 Markdown 并推送
     date_str = datetime.now().strftime("%Y.%m.%d")
     md_content = build_markdown_content(processed_papers)
-    send_to_serverchan(
-        title=f"[论文速览] {date_str} SLAM/Navigation 每日精选",
-        desp=md_content,
-        sendkey=SERVERCHAN_SENDKEY
-    )
+    if SERVERCHAN_SENDKEY:
+        send_to_serverchan(
+            title=f"{date_str} SLAM/Navigation 每日精选",
+            desp=md_content,
+            sendkey=SERVERCHAN_SENDKEY
+        )
+    else:
+        out_path = f"{date_str}_SLAM_Navigation_daily_精选.md"
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(md_content)
+        print(f"[+] 未设置 SERVERCHAN_SENDKEY，已写入 {out_path}")
 
 if __name__ == "__main__":
     main()
