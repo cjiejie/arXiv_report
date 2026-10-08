@@ -12,13 +12,13 @@
 
 | 方向 | 典型命中 |
 |---|---|
-| 机械臂运动控制 | impedance / admittance / force control、inverse kinematics、visual servoing |
-| 机械臂规划 | arm planning、trajectory optimization、TAMP、MoveIt、whole-body |
-| 立体视觉与视觉 SLAM | stereo、visual odometry、VINS、ORB-SLAM、RTAB-Map |
-| 导航 | navigation、path planning、obstacle avoidance、costmap、VLN |
-| 建图与状态估计 | SLAM、mapping、state estimation、loop closure、point cloud |
+| 机械臂运动控制 | inverse kinematics、visual servoing、compliant control、trajectory tracking |
+| 机械臂规划 | OMPL、KDL、Ruckig、FCL、MoveIt、whole-body |
+| 立体视觉与视觉 SLAM | stereo、depth estimation、visual odometry、visual SLAM、VINS、ORB-SLAM、RTAB-Map |
+| 导航 | Nav2、A*、Hybrid A*、TEB、pure pursuit、MPPI、Fast-Planner、costmap、VLN |
+| 建图 | state estimation、loop closure、OctoMap、elevation mapping、Voxblox、Nvblox、Cartographer、LOAM、FAST-LIO |
 
-模型会把每篇归到其中一个标签：具身人形、机械臂运动控制、机械臂规划、立体视觉与视觉 SLAM、导航、建图与状态估计。
+模型会把每篇归到其中一个标签：具身人形、机械臂、立体视觉与视觉 SLAM、导航、建图与状态估计。
 
 ## 环境
 

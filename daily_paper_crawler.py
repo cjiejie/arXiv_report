@@ -19,23 +19,19 @@ RECENT_HOURS = 24
 
 KEYWORDS = [
     # 机械臂运动控制
-    r"\bimpedance control\b",
-    r"\badmittance control\b",
-    r"\bforce(?:/torque)? control\b",
-    r"\binverse dynamics\b",
     r"\binverse kinematics\b",
     r"\bvisual servoing\b",
     r"\bcompliant control\b",
     r"\btrajectory tracking\b",
     # 机械臂规划
-    r"\b(?:manipulator|robot(?:ic)? arm|arm) (?:motion |path |trajectory )?planning\b",
-    r"\btrajectory optimization\b",
-    r"\btask and motion planning\b",
+    r"\bompl\b",
+    r"\bkdl\b",
+    r"\bruckig\b",
+    r"\bfcl\b",
     r"\bmoveit\b",
     r"\bwhole[- ]body\b",
     # 立体视觉、深度与常见视觉 SLAM
     r"\bstereo\b",
-    r"\bvslam\b",
     r"\bdepth estimation\b",
     r"\bvisual odometry\b",
     r"\bvisual slam\b",
@@ -47,24 +43,36 @@ KEYWORDS = [
     r"\bvins(?:[- ](?:mono|fusion))?\b",
     r"\bopenvins\b",
     # 导航
-    r"\bnavigation\b",
-    r"\bvisual navigation\b",
-    r"\bglobal path planning\b",
-    r"\blocal path planning\b",
-    r"\bmotion planning\b",
+    r"\bnavigation2\b",
+    r"\ba(?:\*(?!\w)|[- ]?star\b)",
+    r"\bhybrid a(?:\*(?!\w)|[- ]?star\b)",
+    r"\bteb\b",
+    r"\btimed elastic band\b",
+    r"\bpure pursuit\b",
+    r"\bmppi\b",
+    r"\bfast[- ]?planner\b",
+    r"\bmodel predictive path integral\b",
     r"\bobstacle avoidance\b",
     r"\btraversabilit(?:y|ies)\b",
     r"\bcostmap\b",
-    r"\boccupancy\b",
     r"\bVLN\b",
     r"\bDRLN\b",
-    # 建图与状态估计
-    r"\bslam\b",
-    r"\bmapping\b",
+    # 建图
     r"\bstate estimation\b",
-    r"\bpose estimation\b",
     r"\bloop closure\b",
-    r"\bpoint cloud\b"
+    r"\boctomap\b",
+    r"\belevation map(?:ping)?\b",
+    r"\bvoxblox\b",
+    r"\bnvblox\b",
+    r"\bfiesta\b",
+    r"\b(?:t|e)sdf\b",
+    r"\bcartographer\b",
+    r"\b(?:lego[- ])?loam\b",
+    r"\blio[- ]sam\b",
+    r"\bfast(?:er)?[- ]lio\d*\b",
+    r"\bkiss[- ]icp\b",
+    r"\bkinectfusion\b",
+    r"\belasticfusion\b"
 ]
 
 def arxiv_query_time(dt: datetime) -> str:
@@ -146,7 +154,7 @@ def analyze_paper_with_llm(client: OpenAI, paper: dict) -> dict:
   "contribution": "中文精炼概括：针对什么痛点(当前什么问题、痛点、难点) + 提出了什么方法 + 达到了什么效果（不超过500字）",
   "has_code": true或false,
   "code_url": "若摘要中提及了 GitHub/开源链接则提取，否则留空",
-  "sub_field": "归类到以下标签之一：[具身人形, 机械臂运动控制, 机械臂规划, 立体视觉与视觉 SLAM, 导航, 建图与状态估计]"
+  "sub_field": "归类到以下标签之一：[具身人形, 机械臂, 立体视觉与视觉 SLAM, 导航, 建图与状态估计]"
 }}"""
 
     try:
