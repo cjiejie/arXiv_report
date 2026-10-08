@@ -4,9 +4,9 @@
 
 ## 它怎么筛论文
 
-1. 按提交时间从新到旧，拉取下列分类合计最近 300 篇（一次请求，不是每个分类 300 篇）：`cs.RO`、`cs.CV`、`cs.AI`、`cs.LG`、`cs.SY`、`eess.IV`。
-2. 标题或摘要命中关键词才留下。
-3. 在命中结果里取最新 30 篇交给模型总结。没有相关度打分，更早的命中论文会被截掉。
+1. 只拉取近 24 小时内首次提交的论文，分类为 `cs.RO`、`cs.CV`、`cs.AI`、`cs.LG`、`cs.SY`、`eess.IV`。这些分类合在一次请求里，最多 500 篇。
+2. 标题或摘要命中关键词才留下。更早的旧文更新不计入。
+3. 在命中结果里取最新 30 篇交给模型总结。没有相关度打分，同一天里更早的命中论文会被截掉。
 
 关键词覆盖这些方向：
 
@@ -59,7 +59,8 @@ python daily_paper_crawler.py
 | 常量 | 当前值 | 作用 |
 |---|---|---|
 | `ARXIV_CATEGORIES` | 见上文 | arXiv 分类 |
-| `MAX_RESULTS_PER_CAT` | `300` | 合并查询的篇数上限 |
+| `MAX_RESULTS_PER_CAT` | `500` | 合并查询的篇数上限 |
+| `RECENT_HOURS` | `24` | 只保留首次提交落在这个小时数内的论文 |
 | `KEYWORDS` | 见脚本内分组 | 标题和摘要的正则 |
 | `LLM_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI 兼容接口 |
 | `MODEL_NAME` | `deepseek-chat` | 总结所用模型 |
@@ -75,7 +76,7 @@ python daily_paper_crawler.py
 导出接口短暂不可用，或本机访问 `export.arxiv.org` 受限。过几分钟再跑。
 
 **筛出来的论文很少，或几乎都是视觉论文**  
-`cs.CV`、`cs.LG` 更新更密，会占满这 300 篇窗口。可以收窄 `ARXIV_CATEGORIES`，或加大 `MAX_RESULTS_PER_CAT`。
+`cs.CV`、`cs.LG` 更新更密，会占满这 500 篇窗口。可以收窄 `ARXIV_CATEGORIES`，或加大 `MAX_RESULTS_PER_CAT`。
 
 **微信没收到**  
 确认 SendKey 属于 Turbo 版，且脚本打印的是推送成功。失败时会打印 Server酱返回的 JSON。

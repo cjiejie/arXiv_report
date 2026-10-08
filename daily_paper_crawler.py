@@ -2,7 +2,7 @@ import os
 import re
 import json
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import requests
 from openai import OpenAI
 
@@ -14,7 +14,8 @@ LLM_BASE_URL = "https://api.deepseek.com/v1"
 MODEL_NAME = "deepseek-chat"
 
 ARXIV_CATEGORIES = ["cs.RO", "cs.CV","cs.AI", "eess.IV", "cs.LG","cs.SY"]
-MAX_RESULTS_PER_CAT = 300
+MAX_RESULTS_PER_CAT = 500
+RECENT_HOURS = 24
 
 KEYWORDS = [
     # 机械臂运动控制
@@ -66,13 +67,30 @@ KEYWORDS = [
     r"\bpoint cloud\b"
 ]
 
+def arxiv_query_time(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).strftime("%Y%m%d%H%M")
+
+def parse_arxiv_time(text: str) -> datetime:
+    return datetime.strptime(text.strip(), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+
 # ================= 1. arXiv 抓取与过滤 =================
 def fetch_arxiv_papers():
-    query = " OR ".join([f"cat:{cat}" for cat in ARXIV_CATEGORIES])
-    url = f"http://export.arxiv.org/api/query?search_query={query}&sortBy=submittedDate&sortOrder=descending&max_results={MAX_RESULTS_PER_CAT}"
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=RECENT_HOURS)
+    categories = " OR ".join(f"cat:{cat}" for cat in ARXIV_CATEGORIES)
+    search_query = (
+        f"({categories}) AND "
+        f"submittedDate:[{arxiv_query_time(cutoff)} TO {arxiv_query_time(now)}]"
+    )
+    params = {
+        "search_query": search_query,
+        "sortBy": "submittedDate",
+        "sortOrder": "descending",
+        "max_results": MAX_RESULTS_PER_CAT,
+    }
 
-    print("[*] 正在抓取 arXiv 论文...")
-    resp = requests.get(url, timeout=20)
+    print(f"[*] 正在抓取近 {RECENT_HOURS} 小时的 arXiv 论文...")
+    resp = requests.get("http://export.arxiv.org/api/query", params=params, timeout=20)
     if resp.status_code != 200:
         raise RuntimeError(f"arXiv 请求失败: {resp.status_code}")
 
@@ -83,6 +101,12 @@ def fetch_arxiv_papers():
     regex_pattern = re.compile("|".join(KEYWORDS), re.IGNORECASE)
 
     for entry in root.findall("atom:entry", namespace):
+        published_elem = entry.find("atom:published", namespace)
+        if published_elem is None or not published_elem.text:
+            continue
+        if parse_arxiv_time(published_elem.text) < cutoff:
+            continue
+
         title = entry.find("atom:title", namespace).text.strip().replace("\n", " ")
         summary = entry.find("atom:summary", namespace).text.strip().replace("\n", " ")
 
@@ -106,7 +130,7 @@ def fetch_arxiv_papers():
                 "pdf_url": f"https://arxiv.org/pdf/{arxiv_id}.pdf"
             })
 
-    print(f"[+] 共筛选出 {len(filtered_papers)} 篇相关论文。")
+    print(f"[+] 近 {RECENT_HOURS} 小时内筛选出 {len(filtered_papers)} 篇相关论文。")
     return filtered_papers
 
 # ================= 2. LLM 提炼总结 =================
@@ -119,7 +143,7 @@ def analyze_paper_with_llm(client: OpenAI, paper: dict) -> dict:
 请严格按照以下 JSON 格式输出，不要包含 Markdown 语法标记或任何多余文字：
 {{
   "title_cn": "准确严谨的中文直译标题，保留学术专有名词（如 NeRF、LiDAR、Factor Graph 等）",
-  "contribution": "中文精炼概括：针对什么痛点(当前什么问题、痛点、难点) + 提出了什么方法 + 达到了什么效果（不超过300字）",
+  "contribution": "中文精炼概括：针对什么痛点(当前什么问题、痛点、难点) + 提出了什么方法 + 达到了什么效果（不超过500字）",
   "has_code": true或false,
   "code_url": "若摘要中提及了 GitHub/开源链接则提取，否则留空",
   "sub_field": "归类到以下标签之一：[具身人形, 机械臂运动控制, 机械臂规划, 立体视觉与视觉 SLAM, 导航, 建图与状态估计]"
