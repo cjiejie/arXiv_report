@@ -180,10 +180,6 @@ def md_text(text: str) -> str:
     """转义会打断 Markdown 的字符。Server酱不渲染 HTML。"""
     return re.sub(r"([\\`*_\[\]])", r"\\\1", text or "")
 
-def md_link(label: str, url: str) -> str:
-    safe = (url or "").strip().replace(" ", "%20").replace(")", "%29")
-    return f"[{label}]({safe})"
-
 def build_markdown_content(papers_data: list) -> str:
     """按速览的两段式组装 Server酱 desp。段落之间空一行，否则不会换行。"""
     date_str = datetime.now().strftime("%Y.%m.%d")
@@ -198,9 +194,6 @@ def build_markdown_content(papers_data: list) -> str:
 
     lines.extend(["**■ 论文详细解读**", ""])
     for idx, item in enumerate(papers_data, 1):
-        links = [md_link("arXiv", item["abs_url"]), md_link("PDF", item["pdf_url"])]
-        if item.get("code_url"):
-            links.append(md_link("代码", item["code_url"]))
         lines.extend([
             f"**{idx:02d}. {md_text(item['title_cn'])}**",
             "",
@@ -210,9 +203,13 @@ def build_markdown_content(papers_data: list) -> str:
             "",
             f"核心贡献：{md_text(item['contribution'])}",
             "",
-            " \\| ".join(links),
+            f"arXiv：{item['abs_url']}",
+            "",
+            f"PDF：{item['pdf_url']}",
             "",
         ])
+        if item.get("code_url"):
+            lines.extend([f"代码：{item['code_url']}", ""])
     return "\n".join(lines)
 
 def serverchan_endpoint(sendkey: str) -> str:
