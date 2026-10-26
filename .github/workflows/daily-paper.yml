@@ -2,8 +2,8 @@ name: Daily SLAM Paper Push
 
 on:
   schedule:
-    # arXiv 在 UTC 14:47 运行
-    - cron: '20 04 * * 1-5'  # 周一至周五运行，周末 arXiv 不更新
+    # arXiv 在 UTC 10:05 运行 北京时间下午 18:05执行
+    - cron: '5 10 * * 1-5'  # 周一至周五运行，周末 arXiv 不更新
   workflow_dispatch:        # 支持在 GitHub 网页上手动点“Run workflow”调试
 
 jobs:
